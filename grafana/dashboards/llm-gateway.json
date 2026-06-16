@@ -1,0 +1,354 @@
+{
+  "uid": "llm-gateway-v1",
+  "title": "LLM Inference Gateway",
+  "description": "Request throughput, latency percentiles, errors, tokens, and queue depth",
+  "tags": ["llm", "gateway", "inference"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "model",
+        "label": "Model",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(llm_requests_total, model)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".*",
+        "multi": false
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Request Rate (RPS)",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 10 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(llm_requests_total{model=~\"$model\"}[1m]))",
+          "legendFormat": "RPS"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Error Rate",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(llm_requests_total{model=~\"$model\",status=\"error\"}[1m])) / sum(rate(llm_requests_total{model=~\"$model\"}[1m]))",
+          "legendFormat": "Error %"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Active Requests",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 3 },
+              { "color": "red", "value": 4 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "llm_active_requests",
+          "legendFormat": "Active"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Queue Depth",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 40 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "llm_queue_waiting",
+          "legendFormat": "Waiting"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Token Throughput (tokens/s)",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(llm_tokens_total{model=~\"$model\"}[1m]))",
+          "legendFormat": "tokens/s"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Request Latency Percentiles",
+      "description": "P50 / P95 / P99 end-to-end latency. Alert fires when P95 > 2 s for 5 min.",
+      "gridPos": { "x": 0, "y": 4, "w": 16, "h": 9 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "P95" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "P99" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(llm_request_latency_seconds_bucket{model=~\"$model\"}[5m])) by (le))",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(llm_request_latency_seconds_bucket{model=~\"$model\"}[5m])) by (le))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(llm_request_latency_seconds_bucket{model=~\"$model\"}[5m])) by (le))",
+          "legendFormat": "P99"
+        }
+      ],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "transparent", "value": null },
+          { "color": "rgba(255,120,10,0.15)", "value": 2 }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Inference vs End-to-End Latency (P95)",
+      "description": "Difference between bars = time spent waiting in the queue.",
+      "gridPos": { "x": 16, "y": 4, "w": 8, "h": 9 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "fillOpacity": 10 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(llm_inference_latency_seconds_bucket{model=~\"$model\"}[5m])) by (le))",
+          "legendFormat": "P95 Inference"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(llm_request_latency_seconds_bucket{model=~\"$model\"}[5m])) by (le))",
+          "legendFormat": "P95 End-to-End"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Request Rate by Status",
+      "gridPos": { "x": 0, "y": 13, "w": 12, "h": 8 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 15 }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "error" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "rate_limited" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "queue_full" }, "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(llm_requests_total{model=~\"$model\"}[1m])) by (status)",
+          "legendFormat": "{{ status }}"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Token Throughput (prompt vs completion)",
+      "gridPos": { "x": 12, "y": 13, "w": 12, "h": 8 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2, "fillOpacity": 15 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(llm_tokens_total{model=~\"$model\",direction=\"prompt\"}[1m]))",
+          "legendFormat": "Prompt tokens/s"
+        },
+        {
+          "expr": "sum(rate(llm_tokens_total{model=~\"$model\",direction=\"completion\"}[1m]))",
+          "legendFormat": "Completion tokens/s"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Queue Depth Over Time",
+      "gridPos": { "x": 0, "y": 21, "w": 12, "h": 7 },
+      "options": {
+        "tooltip": { "mode": "single" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "lineWidth": 2, "fillOpacity": 20 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 40 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "llm_queue_waiting",
+          "legendFormat": "Waiting in queue"
+        },
+        {
+          "expr": "llm_active_requests",
+          "legendFormat": "Active (serving)"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Rate-Limited & Rejected Requests",
+      "gridPos": { "x": 12, "y": 21, "w": 12, "h": 7 },
+      "options": {
+        "tooltip": { "mode": "multi" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 15 }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(llm_requests_total{model=~\"$model\",status=\"rate_limited\"}[1m]))",
+          "legendFormat": "Rate limited"
+        },
+        {
+          "expr": "sum(rate(llm_requests_total{model=~\"$model\",status=\"queue_full\"}[1m]))",
+          "legendFormat": "Queue full"
+        },
+        {
+          "expr": "sum(rate(llm_requests_total{model=~\"$model\",status=\"timeout\"}[1m]))",
+          "legendFormat": "Queue timeout"
+        }
+      ]
+    }
+  ]
+}

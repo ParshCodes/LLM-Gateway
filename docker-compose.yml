@@ -1,0 +1,106 @@
+# ─────────────────────────────────────────────────────────────
+# LLM Inference Gateway Stack
+#   gateway   – FastAPI proxy with rate-limiting and queuing
+#   ollama    – Self-hosted LLM server (CPU-friendly, no GPU needed)
+#   prometheus – Metrics collection
+#   grafana    – Dashboards + alerting
+# ─────────────────────────────────────────────────────────────
+
+services:
+
+  # ── Model server (Ollama) ──────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_NUM_PARALLEL=4        # allow up to 4 simultaneous requests
+      - OLLAMA_MAX_LOADED_MODELS=1
+    # Pull the default model on first start
+    entrypoint: ["/bin/sh", "-c",
+      "ollama serve &
+       sleep 5 &&
+       ollama pull ${MODEL_NAME:-llama3.2:1b} &&
+       wait"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s   # model pull can take a while
+    restart: unless-stopped
+
+  # ── Gateway ────────────────────────────────────────────────
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: llm_gateway
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_SERVER_URL: http://ollama:11434
+      MODEL_NAME: ${MODEL_NAME:-llama3.2:1b}
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-60}
+      RATE_LIMIT_WINDOW: ${RATE_LIMIT_WINDOW:-60}
+      MAX_CONCURRENT_REQUESTS: ${MAX_CONCURRENT_REQUESTS:-4}
+      MAX_QUEUE_SIZE: ${MAX_QUEUE_SIZE:-50}
+      QUEUE_TIMEOUT: ${QUEUE_TIMEOUT:-30}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ── Prometheus ─────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Grafana ────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+  prometheus_data:
+  grafana_data:
