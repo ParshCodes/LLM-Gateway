@@ -3,11 +3,11 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install dependencies first (layer cache)
-COPY requirements.txt .
+COPY gateway/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy the gateway package so `import gateway` resolves correctly
+COPY gateway/ ./gateway/
 
 EXPOSE 8000
 

@@ -5,6 +5,15 @@ import structlog
 
 
 def configure_logging(level: str = "INFO") -> None:
+    log_level = logging.getLevelName(level.upper())
+
+    # Configure stdlib so uvicorn and other libraries log at the right level
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=log_level,
+        format="%(message)s",
+    )
+
     structlog.configure(
         processors=[
             structlog.contextvars.merge_contextvars,
@@ -14,10 +23,8 @@ def configure_logging(level: str = "INFO") -> None:
             structlog.processors.StackInfoRenderer(),
             structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            logging.getLevelName(level.upper())
-        ),
-        context_class=dict,
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
+        # stdlib.LoggerFactory returns real logging.Logger objects (have .name)
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
