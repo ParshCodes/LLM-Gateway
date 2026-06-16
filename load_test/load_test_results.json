@@ -1,0 +1,204 @@
+{
+  "summary": {
+    "total_requests": 20,
+    "successful": 17,
+    "failed": 3,
+    "error_rate": 0.15,
+    "duration_s": 174.24,
+    "rps": 0.11,
+    "latencies": {
+      "min": 107.066,
+      "p50": 139.536,
+      "p75": 157.42,
+      "p90": 166.563,
+      "p95": 171.188,
+      "p99": 171.188,
+      "max": 171.188,
+      "mean": 138.245,
+      "stdev": 20.612
+    },
+    "token_throughput_per_s": 11.8
+  },
+  "results": [
+    {
+      "request_id": 4,
+      "status": 504,
+      "latency_s": 30.4695,
+      "error": "Timed out waiting for a free model slot",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "tokens_per_second": 0.0
+    },
+    {
+      "request_id": 5,
+      "status": 504,
+      "latency_s": 60.5782,
+      "error": "Timed out waiting for a free model slot",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "tokens_per_second": 0.0
+    },
+    {
+      "request_id": 6,
+      "status": 504,
+      "latency_s": 90.7761,
+      "error": "Timed out waiting for a free model slot",
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "tokens_per_second": 0.0
+    },
+    {
+      "request_id": 0,
+      "status": 200,
+      "latency_s": 107.066,
+      "error": null,
+      "prompt_tokens": 37,
+      "completion_tokens": 63,
+      "tokens_per_second": 0.59
+    },
+    {
+      "request_id": 1,
+      "status": 200,
+      "latency_s": 114.419,
+      "error": null,
+      "prompt_tokens": 32,
+      "completion_tokens": 128,
+      "tokens_per_second": 1.12
+    },
+    {
+      "request_id": 3,
+      "status": 200,
+      "latency_s": 113.4281,
+      "error": null,
+      "prompt_tokens": 30,
+      "completion_tokens": 128,
+      "tokens_per_second": 1.13
+    },
+    {
+      "request_id": 2,
+      "status": 200,
+      "latency_s": 114.0877,
+      "error": null,
+      "prompt_tokens": 35,
+      "completion_tokens": 128,
+      "tokens_per_second": 1.12
+    },
+    {
+      "request_id": 7,
+      "status": 200,
+      "latency_s": 123.6681,
+      "error": null,
+      "prompt_tokens": 31,
+      "completion_tokens": 128,
+      "tokens_per_second": 1.04
+    },
+    {
+      "request_id": 10,
+      "status": 200,
+      "latency_s": 124.8195,
+      "error": null,
+      "prompt_tokens": 37,
+      "completion_tokens": 67,
+      "tokens_per_second": 0.54
+    },
+    {
+      "request_id": 9,
+      "status": 200,
+      "latency_s": 130.8239,
+      "error": null,
+      "prompt_tokens": 31,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.98
+    },
+    {
+      "request_id": 8,
+      "status": 200,
+      "latency_s": 130.8425,
+      "error": null,
+      "prompt_tokens": 33,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.98
+    },
+    {
+      "request_id": 11,
+      "status": 200,
+      "latency_s": 139.5362,
+      "error": null,
+      "prompt_tokens": 32,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.92
+    },
+    {
+      "request_id": 12,
+      "status": 200,
+      "latency_s": 139.5516,
+      "error": null,
+      "prompt_tokens": 35,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.92
+    },
+    {
+      "request_id": 14,
+      "status": 200,
+      "latency_s": 146.2822,
+      "error": null,
+      "prompt_tokens": 36,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.88
+    },
+    {
+      "request_id": 13,
+      "status": 200,
+      "latency_s": 146.5801,
+      "error": null,
+      "prompt_tokens": 30,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.87
+    },
+    {
+      "request_id": 15,
+      "status": 200,
+      "latency_s": 157.4201,
+      "error": null,
+      "prompt_tokens": 30,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.81
+    },
+    {
+      "request_id": 16,
+      "status": 200,
+      "latency_s": 157.4385,
+      "error": null,
+      "prompt_tokens": 32,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.81
+    },
+    {
+      "request_id": 17,
+      "status": 200,
+      "latency_s": 166.4466,
+      "error": null,
+      "prompt_tokens": 31,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.77
+    },
+    {
+      "request_id": 18,
+      "status": 200,
+      "latency_s": 166.563,
+      "error": null,
+      "prompt_tokens": 33,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.77
+    },
+    {
+      "request_id": 19,
+      "status": 200,
+      "latency_s": 171.1877,
+      "error": null,
+      "prompt_tokens": 31,
+      "completion_tokens": 128,
+      "tokens_per_second": 0.75
+    }
+  ]
+}
